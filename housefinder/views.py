@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.shortcuts import render
 import pandas as pd
 import os
+import joblib
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -70,7 +71,7 @@ def find_houses(request):
         min_budget = int(request.POST.get('min_budget'))
         max_budget = int(request.POST.get('max_budget'))
 
-        dataset_path = os.path.join('housefinder', 'Mumbai.csv') 
+        dataset_path = os.path.join('housefinder', 'Mumbai_updated_realistic.csv') 
         df = pd.read_csv(dataset_path)
 
         filtered = df[(df['Price'] >= min_budget) & (df['Price'] <= max_budget)][['Location', 'Price']]
@@ -83,6 +84,30 @@ def find_houses(request):
 def main_menu(request):
     return render(request, 'main_menu.html')
 
+
+model = joblib.load(r"C:\Python_related\EstateEase\housefinder\ml models\house_price_predictor.pkl")  # adjust path properly
+
+def predict_price(request):
+    if request.method == 'POST':
+        location = request.POST['location']
+        society = request.POST['society']
+        area = float(request.POST['area'])
+        bedrooms = int(request.POST['bedrooms'])
+
+        # Make a DataFrame for prediction
+        input_data = pd.DataFrame({
+            'Location': [location],
+            'Society': [society],
+            'Area': [area],
+            'Bedrooms': [bedrooms]
+        })
+
+        # Predict
+        predicted_price = model.predict(input_data)[0]
+
+        return render(request, 'predict_price_result.html', {'predicted_price': predicted_price})
+
+    return render(request, 'predict_price_form.html')
 
 
 

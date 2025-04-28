@@ -1,0 +1,9 @@
+<form method="post">
+    {% csrf_token %}
+    Location: <input type="text" name="location"><br>
+    Society: <input type="text" name="society"><br>
+    Area (sqft): <input type="number" name="area"><br>
+    Bedrooms: <input type="number" name="bedrooms"><br>
+    <input type="submit" value="Predict Price">
+  </form>
+  
