@@ -1,46 +1,32 @@
-import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-import joblib
+from sklearn.ensemble import RandomForestRegressor
+import pandas as pd
+import pickle
 
-# Load the data
-df = pd.read_csv('Mumbai_updated_realistic.csv')
+# Load data
+df = pd.read_csv(r"C:\Python_related\EstateEase\housefinder\ml models\Mumbai_updated_realistic.csv")
+#dropping irrelevant columns
+df=df.drop(columns=['MaintenanceStaff', 'RainWaterHarvesting', 'IndoorGames', 'Intercom', 'SportsFacility', 'ATM', '24X7Security', 'PowerBackup', 'StaffQuarter', 'Cafeteria', 'MultipurposeRoom', 'WashingMachine', 'Gasconnection', 'AC', 'Wifi', 'Childrensplayarea', 'BED', 'VaastuCompliant', 'Microwave', 'GolfCourse', 'TV', 'DiningTable', 'Sofa', 'Wardrobe', 'Refrigerator', 'Society'])
+# Preprocessing
+df.fillna(0, inplace=True)  # simple missing value handling
+df = pd.get_dummies(df, columns=['Location'])  # one-hot encode location
 
-# Let's simulate 'Area' and 'Bedrooms' if missing
-import numpy as np
-if 'Area' not in df.columns:
-    df['Area'] = np.random.randint(400, 1200, size=len(df))  # area in sqft
-if 'Bedrooms' not in df.columns:
-    df['Bedrooms'] = np.random.randint(1, 4, size=len(df))  # 1 to 3 bedrooms
-
-# Features and Target
-X = df[['Location', 'Society', 'Area', 'Bedrooms']]
+# Separate features and target
+X = df.drop('Price', axis=1)
 y = df['Price']
+# Model
+model = RandomForestRegressor()
+model.fit(X, y)
 
-# Preprocessing (Location and Society are categorical)
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('cat', OneHotEncoder(handle_unknown='ignore'), ['Location', 'Society'])
-    ],
-    remainder='passthrough'  # Area and Bedrooms go as-is
-)
 
-# Create pipeline
-model = Pipeline(steps=[
-    ('preprocessor', preprocessor),
-    ('regressor', LinearRegression())
-])
+# Save model and columns together
+model_data = {
+    'model': model,
+    'columns': X.columns.tolist()
+}
 
-# Split data (optional, for testing accuracy)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+with open(r'C:\Python_related\EstateEase\housefinder\ml models\random_forest_model.pkl', 'wb') as file:
 
-# Train model
-model.fit(X_train, y_train)
+    pickle.dump(model_data, file)
 
-# Save model
-joblib.dump(model, 'house_price_predictor.pkl')
-
-print("Model trained and saved as 'house_price_predictor.pkl' ✅")
+print("Model and columns saved successfully!")
